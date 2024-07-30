@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corner the Lady</title>
+    <style>
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid black;
+        }
+        .red { background-color: red; }
+        .lightmagenta { background-color: #FFFFC5; }
+    </style>
+</head>
+<body>
+    <h1>Corner the Lady</h1>
+    <div class="board" id="board"></div>
+    <p id="message"></p>
+    <button onclick="showRules()">Rules</button>
+    <label for="difficulty">Choose AI Difficulty:</label>
+    <select id="difficulty" onchange="updateDifficulty()">
+        <option value="easy">Easy</option>
+        <option value="medium">Medium</option>
+        <option value="hard">Hard</option>
+    </select>
+    <script>
+        const boardSize = 8;
+        let queenPosition = { row: 0, col: 7 };  // Initial position at h8
+        let currentPlayer = "player";
+        let aiDifficulty = "easy";  // Default difficulty
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            for (let row = 0; row < boardSize; row++) {
+                for (let col = 0; col < boardSize; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = `cell-${row}-${col}`;
+                    if (row === queenPosition.row && col === queenPosition.col) {
+                        cell.classList.add('red');
+                    }
+                    cell.addEventListener('click', () => playerMove(row, col));
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function possibleMoves(position) {
+            const moves = [];
+            const { row, col } = position;
+            if (col > 0) moves.push({ row, col: col - 1 });
+            if (row < boardSize - 1) moves.push({ row: row + 1, col });
+            if (row < boardSize - 1 && col > 0) moves.push({ row: row + 1, col: col - 1 });
+            return moves;
+        }
+
+        function evaluatePosition(position, isMaximizingPlayer) {
+            const { row, col } = position;
+            const distance = row + (boardSize - 1 - col);
+            return isMaximizingPlayer ? -distance : distance;
+        }
+
+        function minimax(position, depth, isMaximizingPlayer, alpha, beta) {
+            if (position.row === boardSize - 1 && position.col === 0 || depth === 0) {
+                return evaluatePosition(position, isMaximizingPlayer);
+            }
+            const moves = possibleMoves(position);
+            if (isMaximizingPlayer) {
+                let maxEval = -Infinity;
+                for (const move of moves) {
+                    const eval = minimax(move, depth - 1, false, alpha, beta);
+                    maxEval = Math.max(maxEval, eval);
+                    alpha = Math.max(alpha, eval);
+                    if (beta <= alpha) break;
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (const move of moves) {
+                    const eval = minimax(move, depth - 1, true, alpha, beta);
+                    minEval = Math.min(minEval, eval);
+                    beta = Math.min(beta, eval);
+                    if (beta <= alpha) break;
+                }
+                return minEval;
+            }
+        }
+
+        function bestMove(position, depth) {
+            let bestMove = null;
+            let bestValue = -Infinity;
+            const moves = possibleMoves(position);
+            for (const move of moves) {
+                const moveValue = minimax(move, depth, false, -Infinity, Infinity);
+                if (moveValue > bestValue) {
+                    bestValue = moveValue;
+                    bestMove = move;
+                }
+            }
+            return bestMove;
+        }
+
+        function playerMove(row, col) {
+            const validMoves = possibleMoves(queenPosition);
+            if (!validMoves.some(move => move.row === row && move.col === col)) return;
+            queenPosition = { row, col };
+            currentPlayer = "AI";
+            updateBoard();
+            if (isGameOver()) {
+                document.getElementById('message').textContent = "Player wins!";
+                return;
+            }
+            setTimeout(aiMove, 500);
+        }
+
+        function aiMove() {
+            let depth;
+            if (aiDifficulty === 'easy') {
+                const moves = possibleMoves(queenPosition);
+                queenPosition = moves[Math.floor(Math.random() * moves.length)];
+            } else if (aiDifficulty === 'medium') {
+                depth = 2;
+                queenPosition = bestMove(queenPosition, depth);
+            } else if (aiDifficulty === 'hard') {
+                depth = 4;
+                queenPosition = bestMove(queenPosition, depth);
+            }
+            currentPlayer = "player";
+            updateBoard();
+            if (isGameOver()) {
+                document.getElementById('message').textContent = "AI wins!";
+            }
+        }
+
+        function updateBoard() {
+            createBoard();
+            const validMoves = possibleMoves(queenPosition);
+            validMoves.forEach(move => {
+                document.getElementById(`cell-${move.row}-${move.col}`).classList.add('lightmagenta');
+            });
+        }
+
+        function isGameOver() {
+            return queenPosition.row === boardSize - 1 && queenPosition.col === 0;
+        }
+
+        function showRules() {
+            alert("Rules of Corner the Lady:\n\n1. The game is played on an 8x8 grid.\n2. The queen starts on any cell in the top row or the rightmost column.\n3. The queen can move west (left), south (down), or southwest (diagonally down-left).\n4. The player and the AI alternate turns.\n5. The goal is to move the queen to the lower-left corner (a1).\n6. The player who moves the queen to a1 wins the game.\n RELOAD THE PAGE IN BROWSER TO PLAY AGAIN :)");
+        }
+
+        function updateDifficulty() {
+            aiDifficulty = document.getElementById('difficulty').value;
+        }
+
+        createBoard();
+        updateBoard();
+    </script>
+</body>
+</html>
