@@ -1,4 +1,4 @@
-# Corner the Lady
+# Corner the Queen
 
 Corner the Lady is a strategic game where the goal is to move the queen piece to the bottom-left corner (a1) of an 8x8 board before the AI does.
 
