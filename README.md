@@ -55,7 +55,7 @@ To set up and run the game locally, follow these steps:
     cd corner-the-lady
     ```
 
-2. Open the `index.html` file in your preferred web browser to start the game.
+2. Open the `game.html` file in your preferred web browser to start the game.
 
 ## Contributing
 
